@@ -33,10 +33,17 @@ app.use('/api/', limiter);
 
 // Basic environment check
 if (process.env.NODE_ENV === 'production') {
-  if (!process.env.ACCESS_TOKEN && !process.env.VITE_ACCESS_TOKEN) {
-    console.error('🚨 CRITICAL: No ACCESS_TOKEN or VITE_ACCESS_TOKEN defined in production!');
+  const missing = [];
+  if (!process.env.ACCESS_TOKEN && !process.env.VITE_ACCESS_TOKEN) missing.push('ACCESS_TOKEN');
+  if (!process.env.MONGODB_URI) missing.push('MONGODB_URI');
+  if (!process.env.JWT_SECRET) missing.push('JWT_SECRET');
+
+  if (missing.length > 0) {
+    console.error(`🚨 CRITICAL: Missing production variables: ${missing.join(', ')}`);
+  } else if (process.env.MONGODB_URI.includes('localhost')) {
+    console.error('⚠️ WARNING: MONGODB_URI is still pointing to localhost in production! This will cause errors.');
   } else {
-    console.log(`✅ Production Auth configured using ${process.env.ACCESS_TOKEN ? 'ACCESS_TOKEN' : 'VITE_ACCESS_TOKEN'}`);
+    console.log(`✅ Production environment configured (Auth: ${process.env.ACCESS_TOKEN ? 'Standard' : 'VITE-only'})`);
   }
 }
 

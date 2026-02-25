@@ -14,10 +14,12 @@ const sessionMiddleware = async (req, res, next) => {
         if (authHeader) {
             // Validate existing session
             try {
+                if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is missing in environment');
                 const decoded = jwt.verify(authHeader, process.env.JWT_SECRET);
                 req.userId = decoded.userId;
                 return next();
-            } catch (_) {
+            } catch (err) {
+                if (err.message === 'JWT_SECRET is missing in environment') throw err;
                 // Invalid/expired — fall through to create new session
             }
         }
@@ -26,6 +28,7 @@ const sessionMiddleware = async (req, res, next) => {
         const identifier = `anon_${uuidv4()}`;
         const user = await User.create({ identifier });
 
+        if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is missing in environment');
         const sessionToken = jwt.sign(
             { userId: user._id, identifier },
             process.env.JWT_SECRET,
