@@ -53,7 +53,10 @@ export default function AnalyzerPage() {
                 setError('Unexpected response from AI service.');
             }
         } catch (err) {
-            const msg = err.response?.data?.error || 'Analysis failed. Please ensure Ollama is running.';
+            const errorData = err.response?.data;
+            const msg = errorData?.details
+                ? `${errorData.error} ${errorData.details}`
+                : (errorData?.error || 'Analysis failed. Please ensure Ollama is running.');
             setError(msg);
         } finally {
             setLoading(false);
