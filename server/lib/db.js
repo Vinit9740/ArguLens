@@ -1,31 +1,33 @@
 const mongoose = require('mongoose');
 
-let cachedConnection = null;
+// Disable buffering so we get real errors immediately instead of 10s timeouts
+mongoose.set('bufferCommands', false);
+
+let cachedPromise = null;
 
 async function connectToDatabase() {
-    if (cachedConnection) {
-        return cachedConnection;
+    if (cachedPromise) {
+        return cachedPromise;
     }
 
     if (!process.env.MONGODB_URI) {
         throw new Error('MONGODB_URI is not defined in environment variables');
     }
 
-    // Connect if no cached connection exists
-    try {
-        const opts = {
-            bufferCommands: true, // Keep buffering enabled but handle it via await
-            serverSelectionTimeoutMS: 15000,
-        };
+    console.log('📡 Attempting new MongoDB connection...');
 
-        cachedConnection = await mongoose.connect(process.env.MONGODB_URI, opts);
+    cachedPromise = mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000, // Fail fast if IP is not whitelisted
+    }).then((m) => {
         console.log('✅ MongoDB connected successfully');
-        return cachedConnection;
-    } catch (err) {
+        return m;
+    }).catch((err) => {
         console.error('❌ MongoDB Connection Error:', err.message);
-        cachedConnection = null;
+        cachedPromise = null; // Reset on failure so next request can retry
         throw err;
-    }
+    });
+
+    return cachedPromise;
 }
 
 module.exports = connectToDatabase;
