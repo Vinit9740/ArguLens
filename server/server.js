@@ -51,15 +51,24 @@ app.get('*', (req, res) => {
 // Error handler (must be last)
 app.use(errorHandler);
 
-// Connect to MongoDB and start server
-const PORT = process.env.PORT || 5000;
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-    app.listen(PORT, () => console.log(`🚀 ArguLens server running on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);
-  });
+// Export app for serverless environments (like Vercel)
+module.exports = app;
+
+// Only start the server if not running in a serverless environment
+if (process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT || 5000;
+  mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+      console.log('✅ Connected to MongoDB');
+      app.listen(PORT, () => console.log(`🚀 ArguLens server running on port ${PORT}`));
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err.message);
+      process.exit(1);
+    });
+} else {
+  // On Vercel, we still need to initiate the MongoDB connection
+  // Express handles the request lifecycle, but we connect once
+  mongoose.connect(process.env.MONGODB_URI).catch(err => console.error('MongoDB Serverless Connect Error:', err));
+}
