@@ -32,8 +32,12 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Basic environment check
-if (process.env.NODE_ENV === 'production' && !process.env.ACCESS_TOKEN) {
-  console.error('🚨 CRITICAL: ACCESS_TOKEN is not defined in production environment!');
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.ACCESS_TOKEN && !process.env.VITE_ACCESS_TOKEN) {
+    console.error('🚨 CRITICAL: No ACCESS_TOKEN or VITE_ACCESS_TOKEN defined in production!');
+  } else {
+    console.log(`✅ Production Auth configured using ${process.env.ACCESS_TOKEN ? 'ACCESS_TOKEN' : 'VITE_ACCESS_TOKEN'}`);
+  }
 }
 
 // API Routes
