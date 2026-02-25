@@ -31,6 +31,11 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Basic environment check
+if (process.env.NODE_ENV === 'production' && !process.env.ACCESS_TOKEN) {
+  console.error('🚨 CRITICAL: ACCESS_TOKEN is not defined in production environment!');
+}
+
 // API Routes
 app.use('/api/analyze', analyzeRoutes);
 app.use('/api', historyRoutes);

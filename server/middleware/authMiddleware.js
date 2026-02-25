@@ -12,7 +12,10 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     if (token !== process.env.ACCESS_TOKEN) {
-        return res.status(401).json({ error: 'Unauthorized. Invalid access token.' });
+        return res.status(401).json({
+            error: 'Unauthorized. Invalid access token.',
+            details: 'The token provided by the frontend does not match the server-side ACCESS_TOKEN. Please check your Vercel Environment Variables.'
+        });
     }
 
     next();
