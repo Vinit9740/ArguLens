@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
+const connectToDatabase = require('../lib/db');
 
 /**
  * Session Middleware – auto-creates anonymous user sessions via JWT.
@@ -9,6 +10,7 @@ const User = require('../models/User');
  */
 const sessionMiddleware = async (req, res, next) => {
     try {
+        await connectToDatabase();
         const authHeader = req.headers['x-session-token'];
 
         if (authHeader) {

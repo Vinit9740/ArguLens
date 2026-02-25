@@ -31,6 +31,8 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+const connectToDatabase = require('./lib/db');
+
 // Basic environment check
 if (process.env.NODE_ENV === 'production') {
   const missing = [];
@@ -40,10 +42,6 @@ if (process.env.NODE_ENV === 'production') {
 
   if (missing.length > 0) {
     console.error(`🚨 CRITICAL: Missing production variables: ${missing.join(', ')}`);
-  } else if (process.env.MONGODB_URI.includes('localhost')) {
-    console.error('⚠️ WARNING: MONGODB_URI is still pointing to localhost in production! This will cause errors.');
-  } else {
-    console.log(`✅ Production environment configured (Auth: ${process.env.ACCESS_TOKEN ? 'Standard' : 'VITE-only'})`);
   }
 }
 
@@ -70,21 +68,18 @@ app.use(errorHandler);
 // Export app for serverless environments (like Vercel)
 module.exports = app;
 
-// Only start the server if not running in a serverless environment
+// Server startup
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 5000;
-  mongoose
-    .connect(process.env.MONGODB_URI)
+  connectToDatabase()
     .then(() => {
-      console.log('✅ Connected to MongoDB');
       app.listen(PORT, () => console.log(`🚀 ArguLens server running on port ${PORT}`));
     })
     .catch((err) => {
-      console.error('❌ MongoDB connection error:', err.message);
+      console.error('❌ Server failed to start:', err.message);
       process.exit(1);
     });
 } else {
-  // On Vercel, we still need to initiate the MongoDB connection
-  // Express handles the request lifecycle, but we connect once
-  mongoose.connect(process.env.MONGODB_URI).catch(err => console.error('MongoDB Serverless Connect Error:', err));
+  // On Vercel, we don't call app.listen, but we ensure DB is connecting
+  connectToDatabase().catch(err => console.error('Vercel DB Connect Error:', err));
 }
