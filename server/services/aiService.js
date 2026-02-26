@@ -54,7 +54,7 @@ PLAN: Reference economic data, Avoid extreme accusations, Discuss social contrac
                 stream: false,
                 options: { temperature: 0.1, num_predict: 1000 }
             }),
-            signal: AbortSignal.timeout(10000) // Add a timeout so it doesn't hang forever in production
+            signal: AbortSignal.timeout(60000) // 60s timeout to allow local Ollama enough time to respond
         });
 
         if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
