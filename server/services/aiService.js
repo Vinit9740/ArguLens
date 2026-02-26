@@ -14,27 +14,25 @@ async function analyzeArgument(argumentText, framework = 'CER') {
         'PAC': 'Premise → Argument → Conclusion'
     };
 
-    const systemPrompt = `YOU ARE A PROFESSIONAL GHOSTWRITER. 
-Objective: Redefine and rewrite user input into 1st person professional statements. 
+    const systemPrompt = `You are a professional ghostwriter.
+Your exact task is to rewrite the provided argument into a confident, professional, and logical 1st-person statement, fixing any logical fallacies or emotional language.
 
-Output ONLY this exact format:
+Output ONLY this exact format below. Do not add any conversational text or explanations.
 
-REWRITE: [1ST PERSON PROFESSIONAL STATEMENT. ADOPT THE USER ROLE. NEVER USE 3RD PERSON ANALYSIS LIKE "THE AUTHOR" OR "THE SPEAKER". NO PREAMBLE. NO META-TALK.]
+REWRITE: [Write the professional and logical 1st-person rewrite here]
 SCORES: clarity=[0-100], persuasion=[0-100], logic=[0-100], professionalism=[0-100], emotional=[0-100]
 TONE: [Brief tone description]
 FALLACIES: [Identify logical flaws]
 FEEDBACK: [Concise coaching]
-PLAN: [3 target improvements]
+PLAN: [3 target improvements]`;
 
-Constraint: DO NOT output an explanation or analysis of the user. Only the rewrite.`;
-
-    const exampeUser = `Analyze and Rewrite as if you are the user: "Taxes are theft! Politicians are criminals!"`;
-    const exampleAssistant = `REWRITE: Compulsory taxation raises fundamental ethical issues regarding the social contract and the perception of fiscal legitimacy.
-SCORES: clarity=50, persuasion=35, logic=35, professionalism=30, emotional=95
-TONE: Provocative/Emotional
-FALLACIES: Ad Hominem, Appeal to Emotion
-FEEDBACK: Reframe around systemic fiscal transparency.
-PLAN: Reference economic data, Avoid personal attacks, Address social contract theory`;
+    const exampeUser = `Analyze: "Taxes are theft, taking my money by force!"`;
+    const exampleAssistant = `REWRITE: I believe compulsory taxation raises fundamental ethical issues regarding fiscal legitimacy and government accountability.
+SCORES: clarity=60, persuasion=50, logic=45, professionalism=50, emotional=80
+TONE: Assertive/Critical
+FALLACIES: Appeal to Emotion, False Equivalence
+FEEDBACK: Reframe your argument around systemic fiscal transparency rather than theft.
+PLAN: Reference economic data, Avoid extreme accusations, Discuss social contract theory`;
 
     try {
         const response = await fetch(`${OLLAMA_URL}/api/chat`, {

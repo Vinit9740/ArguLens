@@ -199,6 +199,21 @@ function formatFeedback(data) {
 }
 
 /**
+ * Removes conversational meta-talk from AI output.
+ */
+function stripMetaTalk(text) {
+    if (!text) return '';
+    let clean = text.trim();
+    // Remove leading conversational fillers like "Here is the rewrite:"
+    clean = clean.replace(/^(here is|sure,? here|here's|i have rewritten|the rewritten|an improved version|revised version|professional statement).*?:/i, '').trim();
+    // Remove surrounding quotes if present
+    if (clean.startsWith('"') && clean.endsWith('"')) {
+        clean = clean.substring(1, clean.length - 1).trim();
+    }
+    return clean;
+}
+
+/**
  * Main processing function for the reliability layer.
  */
 function processAIResponse(rawText, originalText = '') {
@@ -211,7 +226,7 @@ function processAIResponse(rawText, originalText = '') {
             fallacies: extractFallacies(data, originalText),
             tone: safeString(data.tone_classification || data.tone || data.tone_profile, 'Analytical'),
             feedback: formatFeedback(data),
-            refinedVersion: safeString(
+            refinedVersion: stripMetaTalk(safeString(
                 data.rewritten_professional_version ||
                 data.refined_professional_version ||
                 data.refined_version ||
@@ -223,7 +238,7 @@ function processAIResponse(rawText, originalText = '') {
                 data.refined ||
                 data.output_text,
                 ''
-            ),
+            )),
             suggestions: safeStringArray(data.suggestions || data.tips, ['Elaborate on your reasoning.']).slice(0, 3)
         }
     };
