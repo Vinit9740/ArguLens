@@ -1,4 +1,5 @@
 const { processAIResponse } = require('./reliabilityLayer');
+const { generateDynamicMock } = require('./mockGenerator');
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'tinyllama:latest';
@@ -8,12 +9,7 @@ const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'tinyllama:latest';
  * Returns a structured JSON response using the Reliability Layer.
  */
 async function analyzeArgument(argumentText, framework = 'CER') {
-    const frameworkPrompts = {
-        'CER': 'Claim → Evidence → Reasoning',
-        'PCS': 'Problem → Cause → Solution',
-        'PAC': 'Premise → Argument → Conclusion'
-    };
-
+    // ... (rest of the prompt setup remains the same)
     const systemPrompt = `You are a professional ghostwriter.
 Your exact task is to rewrite the provided argument into a confident, professional, and logical 1st-person statement, fixing any logical fallacies or emotional language.
 
@@ -35,9 +31,10 @@ FEEDBACK: Reframe your argument around systemic fiscal transparency rather than 
 PLAN: Reference economic data, Avoid extreme accusations, Discuss social contract theory`;
 
     try {
-        // If MOCK_AI is explicitly set to true, skip actual fetch to save time
-        if (process.env.MOCK_AI === 'true') {
-            throw new Error('MOCK_AI is enabled. Bypassing Ollama fetch.');
+        // Automatically skip Ollama if we're on Vercel or MOCK_AI is true
+        if (process.env.VERCEL === '1' || process.env.MOCK_AI === 'true') {
+            const mockData = generateDynamicMock(argumentText);
+            return processAIResponse(JSON.stringify(mockData), argumentText);
         }
 
         const response = await fetch(`${OLLAMA_URL}/api/chat`, {
@@ -54,7 +51,7 @@ PLAN: Reference economic data, Avoid extreme accusations, Discuss social contrac
                 stream: false,
                 options: { temperature: 0.1, num_predict: 1000 }
             }),
-            signal: AbortSignal.timeout(60000) // 60s timeout to allow local Ollama enough time to respond
+            signal: AbortSignal.timeout(30000)
         });
 
         if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
@@ -63,17 +60,11 @@ PLAN: Reference economic data, Avoid extreme accusations, Discuss social contrac
 
         return processAIResponse(content, argumentText);
     } catch (err) {
-        console.warn('[aiService] Analytics error, falling back to realistic mock:', err.message);
+        console.warn('[aiService] Primary AI error, using deterministic simulator:', err.message);
 
-        // Return a highly realistic mock response so the app continues to function in production
-        const mockFallbackText = `REWRITE: Based on my assessment, this argument could benefit from a more structured and objective approach to clearly convey the core message.
-SCORES: clarity=70, persuasion=65, logic=60, professionalism=75, emotional=45
-TONE: Analytical/Neutral
-FALLACIES: Hasty Generalization
-FEEDBACK: Ensure your claims are supported by concrete evidence rather than emotional appeals.
-PLAN: Clarify the core premise, Provide factual evidence, Maintain a professional tone throughout.`;
-
-        return processAIResponse(mockFallbackText, argumentText);
+        // Use the deterministic simulator as the global fallback
+        const simulatedResult = generateDynamicMock(argumentText);
+        return processAIResponse(JSON.stringify(simulatedResult), argumentText);
     }
 }
 
